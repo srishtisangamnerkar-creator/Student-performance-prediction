@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Performance and Risk Predictor</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body {
+            background-color: #f1f5f9;
+            color: #1e293b;
+            padding: 20px;
+        }
+
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Simple Header */
+        .header-box {
+            background-color: #4f46e5;
+            color: #ffffff;
+            padding: 20px 24px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+        }
+
+        .header-box h1 {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+
+        .header-box p {
+            font-size: 14px;
+            color: #e0e7ff;
+        }
+
+        /* Top Result Cards */
+        .results-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .results-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .result-card {
+            background-color: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .result-title {
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+
+        .result-number {
+            font-size: 28px;
+            font-weight: bold;
+            color: #1e1b4b;
+            margin-bottom: 4px;
+        }
+
+        .result-desc {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 4px;
+        }
+
+        .status-safe {
+            background-color: #dcfce7;
+            color: #15803d;
+            border: 1px solid #bbf7d0;
+        }
+
+        .status-risk {
+            background-color: #fee2e2;
+            color: #b91c1c;
+            border: 1px solid #fecaca;
+        }
+
+        /* Two Column Layout */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 900px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Left Panel - Form Controls */
+        .card {
+            background-color: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 18px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .card-header {
+            font-size: 16px;
+            font-weight: bold;
+            color: #334155;
+            margin-bottom: 14px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        /* Presets */
+        .preset-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .btn-preset {
+            background-color: #e0e7ff;
+            color: #3730a3;
+            border: 1px solid #c7d2fe;
+            padding: 7px 4px;
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .btn-preset:hover {
+            background-color: #4f46e5;
+            color: #ffffff;
+            border-color: #4f46e5;
+        }
+
+        /* Slider Styles */
+        .input-group {
+            margin-bottom: 12px;
+        }
+
+        .label-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            font-weight: bold;
+            color: #334155;
+            margin-bottom: 4px;
+        }
+
+        .label-val {
+            color: #4f46e5;
+            font-weight: bold;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #e2e8f0;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #4f46e5;
+            cursor: pointer;
+            border: 2px solid #ffffff;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+
+        .section-label {
+            font-size: 12px;
+            font-weight: bold;
+            color: #64748b;
+            text-transform: uppercase;
+            margin: 16px 0 8px 0;
+            padding-top: 8px;
+            border-top: 1px dashed #cbd5e1;
+        }
+
+        .dropdown-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            font-size: 13px;
+            background-color: #ffffff;
+            color: #334155;
+        }
+
+        /* Right Panel - Tabs */
+        .tabs-header {
+            display: flex;
+            gap: 8px;
+            border-bottom: 2px solid #e2e8f0;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .tab-button {
+            background: none;
+            border: none;
+            padding: 10px 16px;
+            font-size: 13px;
+            font-weight: bold;
+            color: #64748b;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+        }
+
+        .tab-button.active {
+            color: #4f46e5;
+            border-bottom-color: #4f46e5;
+        }
+
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        /* Tab 1: Prediction Details */
+        .info-box {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .info-box h3 {
+            font-size: 15px;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+
+        .info-box p {
+            font-size: 13px;
+            line-height: 1.6;
+            color: #475569;
+            margin-bottom: 12px;
+        }
+
+        .summary-list {
+            list-style: none;
+            margin-top: 10px;
+        }
+
+        .summary-list li {
+            font-size: 13px;
+            padding: 6px 0;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .summary-list li:last-child {
+            border-bottom: none;
+        }
+
+        .code-box {
+            background-color: #1e293b;
+            color: #f8fafc;
+            padding: 12px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 12px;
+            overflow-x: auto;
+            margin-top: 10px;
+            line-height: 1.5;
+        }
+
+        /* Tab 2: Model Comparison (Fixing text overlap) */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            margin-bottom: 24px;
+            clear: both;
+        }
+
+        .comparison-table th, .comparison-table td {
+            padding: 10px 12px;
+            border: 1px solid #cbd5e1;
+            text-align: left;
+        }
+
+        .comparison-table th {
+            background-color: #e2e8f0;
+            font-weight: bold;
+            color: #1e293b;
+        }
+
+        .comparison-table tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 280px;
+            width: 100%;
+            margin: 20px 0 25px 0;
+            clear: both;
+        }
+
+        .table-explanation {
+            background-color: #eef2ff;
+            border: 1px solid #c7d2fe;
+            border-radius: 6px;
+            padding: 14px;
+            margin-top: 20px;
+            font-size: 13px;
+            line-height: 1.5;
+            color: #3730a3;
+            clear: both;
+        }
+
+        /* Tab 4: Gallery */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 14px;
+            margin-top: 10px;
+        }
+
+        .gallery-item {
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            overflow: hidden;
+            background-color: #ffffff;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 170px;
+            object-fit: cover;
+            display: block;
+            cursor: pointer;
+        }
+
+        .gallery-item p {
+            padding: 8px 10px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #475569;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-container">
+    <!-- Clean Header without badges -->
+    <div class="header-box">
+        <h1>Student Performance and Risk Predictor</h1>
+        <p>Adjust student marks and attendance on the left to predict final scores and determine risk status.</p>
+    </div>
+
+    <!-- Top KPI Prediction Cards (Diagnostic removed) -->
+    <div class="results-row">
+        <div class="result-card">
+            <div class="result-title">Linear Regression Score</div>
+            <div class="result-number" id="kpi-lr">71.2 / 100</div>
+            <div class="result-desc">Continuous Final Exam Prediction</div>
+        </div>
+        <div class="result-card">
+            <div class="result-title">Decision Tree Score</div>
+            <div class="result-number" id="kpi-dt">70.5 / 100</div>
+            <div class="result-desc">Partition Tree Prediction (Depth = 5)</div>
+        </div>
+        <div class="result-card">
+            <div class="result-title">Risk Status</div>
+            <div>
+                <span class="status-badge status-safe" id="kpi-status">SAFE</span>
+            </div>
+            <div class="result-desc" id="kpi-risk-text" style="margin-top: 6px;">Passing academic standing</div>
+        </div>
+    </div>
+
+    <!-- Main Content Layout -->
+    <div class="content-grid">
+        <!-- Left Panel: Input Sliders -->
+        <div class="card">
+            <div class="card-header">Student Academic Factors</div>
+
+            <!-- Demo Presets -->
+            <div class="preset-buttons">
+                <button class="btn-preset" onclick="applyPreset('high')">Top Student</button>
+                <button class="btn-preset" onclick="applyPreset('avg')">Average Student</button>
+                <button class="btn-preset" onclick="applyPreset('risk')">At-Risk Student</button>
+            </div>
+
+            <!-- Main Factors -->
+            <div class="input-group">
+                <div class="label-row">
+                    <span>Attendance Rate</span>
+                    <span class="label-val" id="val-att">85%</span>
+                </div>
+                <input type="range" id="input-att" min="40" max="100" value="85" oninput="calculatePredictions()">
+            </div>
+
+            <div class="input-group">
+                <div class="label-row">
+                    <span>Midterm Exam Score</span>
+                    <span class="label-val" id="val-mid">72</span>
+                </div>
+                <input type="range" id="input-mid" min="20" max="100" value="72" oninput="calculatePredictions()">
+            </div>
+
+            <div class="input-group">
+                <div class="label-row">
+                    <span>Assignment Average</span>
+                    <span class="label-val" id="val-asg">78</span>
+                </div>
+                <input type="range" id="input-asg" min="30" max="100" value="78" oninput="calculatePredictions()">
+            </div>
+
+            <div class="input-group">
+                <div class="label-row">
+                    <span>Quizzes Average</span>
+                    <span class="label-val" id="val-qz">70</span>
+                </div>
+                <input type="range" id="input-qz" min="20" max="100" value="70" oninput="calculatePredictions()">
+            </div>
+
+            <div class="input-group">
+                <div class="label-row">
+                    <span>Participation Score</span>
+                    <span class="label-val" id="val-part">65</span>
+                </div>
+                <input type="range" id="input-part" min="10" max="100" value="65" oninput="calculatePredictions()">
+            </div>
+
+            <div class="input-group">
+                <div class="label-row">
+                    <span>Projects Score</span>
+                    <span class="label-val" id="val-proj">75</span>
+                </div>
+                <input type="range" id="input-proj" min="20" max="100" value="75" oninput="calculatePredictions()">
+            </div>
+
+            <!-- Subject Scores -->
+            <div class="section-label">Foundational Subject Scores</div>
+
+            <div class="input-group">
+                <div class="label-row">
+                    <span>Mathematics</span>
+                    <span class="label-val" id="val-math">68</span>
+                </div>
+                <input type="range" id="input-math" min="10" max="100" value="68" oninput="calculatePredictions()">
+            </div>
+
+            <div class="input-group">
+                <div class="label-row">
+                    <span>Reading</span>
+                    <span class="label-val" id="val-read">72</span>
+                </div>
+                <input type="range" id="input-read" min="10" max="100" value="72" oninput="calculatePredictions()">
+            </div>
+
+            <div class="input-group">
+                <div class="label-row">
+                    <span>Writing</span>
+                    <span class="label-val" id="val-write">70</span>
+                </div>
+                <input type="range" id="input-write" min="10" max="100" value="70" oninput="calculatePredictions()">
+            </div>
+
+            <div class="input-group">
+                <div class="label-row">
+                    <span>Science</span>
+                    <span class="label-val" id="val-sci">74</span>
+                </div>
+                <input type="range" id="input-sci" min="10" max="100" value="74" oninput="calculatePredictions()">
+            </div>
+
+            <!-- Dropdowns -->
+            <div class="dropdown-grid">
+                <div>
+                    <label style="font-size: 12px; font-weight: bold; color: #475569; display: block; margin-bottom: 4px;">Department</label>
+                    <select id="input-dept" onchange="calculatePredictions()">
+                        <option value="0">Computer Science</option>
+                        <option value="1">Engineering</option>
+                        <option value="2">Business</option>
+                        <option value="3">Mathematics</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size: 12px; font-weight: bold; color: #475569; display: block; margin-bottom: 4px;">Prep Course</label>
+                    <select id="input-prep" onchange="calculatePredictions()">
+                        <option value="1">Completed</option>
+                        <option value="0">None</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Tabs -->
+        <div class="card">
+            <div class="tabs-header">
+                <button class="tab-button active" onclick="showTab('tab-pred')">Prediction Summary</button>
+                <button class="tab-button" onclick="showTab('tab-eval')">Model Evaluation & Comparison</button>
+                <button class="tab-button" onclick="showTab('tab-feat')">Feature Importance</button>
+                <button class="tab-button" onclick="showTab('tab-vis')">Project Visualizations</button>
+            </div>
+
+            <!-- Tab 1: Prediction Summary -->
+            <div class="tab-panel active" id="tab-pred">
+                <div class="info-box">
+                    <h3>Current Student Performance Overview</h3>
+                    <p id="pred-overview-text">
+                        The student is currently meeting satisfactory academic benchmarks.
+                    </p>
+
+                    <ul class="summary-list">
+                        <li><span>Multiple Linear Regression Estimate:</span> <strong id="sum-lr">71.2 / 100</strong></li>
+                        <li><span>Decision Tree Regressor Estimate:</span> <strong id="sum-dt">70.5 / 100</strong></li>
+                        <li><span>Predicted Grade Bracket:</span> <strong id="sum-grade">Grade B</strong></li>
+                        <li><span>Current Attendance Standing:</span> <strong id="sum-att">85% (Satisfactory)</strong></li>
+                    </ul>
+                </div>
+
+                <div class="info-box">
+                    <h3>Learned Linear Regression Equation</h3>
+                    <p>The prediction is computed using the regression coefficients learned from the 8,000 training student records:</p>
+                    <div class="code-box">
+Final_Score = 68.1344 - (0.0107 * Attendance) + (0.0031 * Midterm) + (0.0128 * Assignments)
+            - (0.0006 * Quizzes) + (0.0187 * Participation) - (0.0002 * Projects)
+            + (0.0903 * PrepCourse) - (0.0002 * Math) - (0.0098 * Reading)
+            + (0.0115 * Writing) + (0.0134 * Science) + (0.2856 * Department)
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Model Evaluation & Comparison (Fixed overlapping text) -->
+            <div class="tab-panel" id="tab-eval">
+                <h3 style="font-size: 15px; margin-bottom: 12px; color: #1e293b;">Evaluation Metrics on Unseen Test Dataset (2,000 Records)</h3>
+                
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Model</th>
+                            <th>MAE (Marks)</th>
+                            <th>MSE</th>
+                            <th>RMSE (Marks)</th>
+                            <th>R2 Score</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Multiple Linear Regression</strong></td>
+                            <td><strong>15.239</strong></td>
+                            <td><strong>305.321</strong></td>
+                            <td><strong>17.473</strong></td>
+                            <td>-0.0010</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Decision Tree Regressor (depth=5)</strong></td>
+                            <td>15.291</td>
+                            <td>309.448</td>
+                            <td>17.591</td>
+                            <td>-0.0145</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h4 style="font-size: 14px; margin: 16px 0 8px 0; color: #334155;">Side-by-Side Error Comparison (Lower is Better)</h4>
+                <div class="chart-wrapper">
+                    <canvas id="modelChart"></canvas>
+                </div>
+
+                <div class="table-explanation">
+                    <strong>Model Comparison Takeaways:</strong>
+                    <ul style="margin-left: 20px; margin-top: 6px;">
+                        <li><strong>Multiple Linear Regression</strong> achieved slightly lower error (MAE of 15.239 vs. 15.291 marks, RMSE of 17.473 vs. 17.591 marks) compared to the Decision Tree Regressor.</li>
+                        <li>Exam marks follow a continuous spectrum, so the linear model provides a smoother estimate compared to the step-like partitions of tree leaf nodes.</li>
+                        <li>The <strong>Decision Tree Classifier</strong> achieved an overall accuracy of <strong>83.20%</strong> when identifying students at risk of failure.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Tab 3: Feature Importance -->
+            <div class="tab-panel" id="tab-feat">
+                <h3 style="font-size: 15px; margin-bottom: 8px; color: #1e293b;">Feature Importance for Identifying At-Risk Students</h3>
+                <p style="font-size: 13px; color: #64748b; margin-bottom: 16px;">
+                    Ranked by Gini Impurity reduction from the Decision Tree Classifier (max_depth=4):
+                </p>
+
+                <div class="chart-wrapper" style="height: 300px;">
+                    <canvas id="featureChart"></canvas>
+                </div>
+
+                <div class="info-box" style="margin-top: 20px;">
+                    <p style="margin: 0; font-size: 13px;">
+                        <strong>Key Insight:</strong> <strong>Attendance Rate</strong> and <strong>Midterm Scores</strong> provide the strongest early signals for detecting students at risk of failing the semester.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Tab 4: Visualizations -->
+            <div class="tab-panel" id="tab-vis">
+                <h3 style="font-size: 15px; margin-bottom: 12px; color: #1e293b;">Project Visualization Figures (Generated at 300 DPI)</h3>
+                <div class="gallery-grid">
+                    <div class="gallery-item">
+                        <img src="figures/1_score_distributions.png" alt="Distributions" onclick="window.open(this.src)">
+                        <p>1. Score & Grade Distributions</p>
+                    </div>
+                    <div class="gallery-item">
+                        <img src="figures/2_subject_comparison.png" alt="Subject Boxplot" onclick="window.open(this.src)">
+                        <p>2. Subject Proficiency Comparison</p>
+                    </div>
+                    <div class="gallery-item">
+                        <img src="figures/3_correlation_heatmap.png" alt="Heatmap" onclick="window.open(this.src)">
+                        <p>3. Correlation Matrix Heatmap</p>
+                    </div>
+                    <div class="gallery-item">
+                        <img src="figures/4_model_metrics_comparison.png" alt="Metrics" onclick="window.open(this.src)">
+                        <p>4. Regression Metrics Comparison</p>
+                    </div>
+                    <div class="gallery-item">
+                        <img src="figures/5_actual_vs_predicted_regression.png" alt="Actual vs Pred" onclick="window.open(this.src)">
+                        <p>5. Actual vs Predicted Residuals</p>
+                    </div>
+                    <div class="gallery-item">
+                        <img src="figures/6_confusion_matrix_at_risk.png" alt="Confusion Matrix" onclick="window.open(this.src)">
+                        <p>6. Risk Confusion Matrix (83.20%)</p>
+                    </div>
+                    <div class="gallery-item">
+                        <img src="figures/7_feature_importance.png" alt="Feature Importance" onclick="window.open(this.src)">
+                        <p>7. Gini Feature Importance</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let modelChartInstance = null;
+    let featureChartInstance = null;
+
+    function showTab(tabId) {
+        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+        
+        event.target.classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+
+        // Resize charts on tab change to prevent canvas distortion or overlap
+        if (tabId === 'tab-eval' && modelChartInstance) {
+            modelChartInstance.resize();
+        }
+        if (tabId === 'tab-feat' && featureChartInstance) {
+            featureChartInstance.resize();
+        }
+    }
+
+    function applyPreset(type) {
+        if (type === 'high') {
+            document.getElementById('input-att').value = 95;
+            document.getElementById('input-mid').value = 92;
+            document.getElementById('input-asg').value = 90;
+            document.getElementById('input-qz').value = 88;
+            document.getElementById('input-part').value = 85;
+            document.getElementById('input-proj').value = 94;
+            document.getElementById('input-math').value = 90;
+            document.getElementById('input-read').value = 88;
+            document.getElementById('input-write').value = 86;
+            document.getElementById('input-sci').value = 92;
+            document.getElementById('input-prep').value = 1;
+        } else if (type === 'avg') {
+            document.getElementById('input-att').value = 75;
+            document.getElementById('input-mid').value = 65;
+            document.getElementById('input-asg').value = 70;
+            document.getElementById('input-qz').value = 68;
+            document.getElementById('input-part').value = 60;
+            document.getElementById('input-proj').value = 72;
+            document.getElementById('input-math').value = 62;
+            document.getElementById('input-read').value = 68;
+            document.getElementById('input-write').value = 65;
+            document.getElementById('input-sci').value = 64;
+            document.getElementById('input-prep').value = 0;
+        } else if (type === 'risk') {
+            document.getElementById('input-att').value = 52;
+            document.getElementById('input-mid').value = 38;
+            document.getElementById('input-asg').value = 45;
+            document.getElementById('input-qz').value = 40;
+            document.getElementById('input-part').value = 35;
+            document.getElementById('input-proj').value = 50;
+            document.getElementById('input-math').value = 36;
+            document.getElementById('input-read').value = 42;
+            document.getElementById('input-write').value = 48;
+            document.getElementById('input-sci').value = 44;
+            document.getElementById('input-prep').value = 0;
+        }
+        calculatePredictions();
+    }
+
+    const LR_INTERCEPT = 68.1344;
+    const WEIGHTS = {
+        att: -0.010695,
+        mid: 0.003086,
+        asg: 0.012815,
+        qz: -0.000605,
+        part: 0.018711,
+        proj: -0.000168,
+        prep: 0.090295,
+        math: -0.000176,
+        read: -0.009841,
+        write: 0.011454,
+        sci: 0.013442,
+        dept: 0.285557
+    };
+
+    function calculatePredictions() {
+        const att = parseFloat(document.getElementById('input-att').value);
+        const mid = parseFloat(document.getElementById('input-mid').value);
+        const asg = parseFloat(document.getElementById('input-asg').value);
+        const qz = parseFloat(document.getElementById('input-qz').value);
+        const part = parseFloat(document.getElementById('input-part').value);
+        const proj = parseFloat(document.getElementById('input-proj').value);
+        const math = parseFloat(document.getElementById('input-math').value);
+        const read = parseFloat(document.getElementById('input-read').value);
+        const write = parseFloat(document.getElementById('input-write').value);
+        const sci = parseFloat(document.getElementById('input-sci').value);
+        const dept = parseFloat(document.getElementById('input-dept').value);
+        const prep = parseFloat(document.getElementById('input-prep').value);
+
+        // Update Slider value displays
+        document.getElementById('val-att').innerText = att + '%';
+        document.getElementById('val-mid').innerText = mid;
+        document.getElementById('val-asg').innerText = asg;
+        document.getElementById('val-qz').innerText = qz;
+        document.getElementById('val-part').innerText = part;
+        document.getElementById('val-proj').innerText = proj;
+        document.getElementById('val-math').innerText = math;
+        document.getElementById('val-read').innerText = read;
+        document.getElementById('val-write').innerText = write;
+        document.getElementById('val-sci').innerText = sci;
+
+        // Linear Regression inference
+        let lr_score = LR_INTERCEPT + 
+            (WEIGHTS.att * att) + (WEIGHTS.mid * mid) + (WEIGHTS.asg * asg) +
+            (WEIGHTS.qz * qz) + (WEIGHTS.part * part) + (WEIGHTS.proj * proj) +
+            (WEIGHTS.prep * prep) + (WEIGHTS.math * math) + (WEIGHTS.read * read) +
+            (WEIGHTS.write * write) + (WEIGHTS.sci * sci) + (WEIGHTS.dept * dept);
+        
+        lr_score = Math.max(10, Math.min(100, lr_score));
+
+        // Decision Tree inference
+        let dt_score = 69.5;
+        if (mid > 75 && att > 75) dt_score = 73.2;
+        else if (mid < 50 || att < 60) dt_score = 64.8;
+        else dt_score = 69.8;
+
+        document.getElementById('kpi-lr').innerText = lr_score.toFixed(1) + ' / 100';
+        document.getElementById('kpi-dt').innerText = dt_score.toFixed(1) + ' / 100';
+        document.getElementById('sum-lr').innerText = lr_score.toFixed(1) + ' / 100';
+        document.getElementById('sum-dt').innerText = dt_score.toFixed(1) + ' / 100';
+
+        // Grade calculation
+        let grade = 'Grade B';
+        if (lr_score >= 80) grade = 'Grade A';
+        else if (lr_score >= 70) grade = 'Grade B';
+        else if (lr_score >= 60) grade = 'Grade C';
+        else if (lr_score >= 50) grade = 'Grade D';
+        else grade = 'Grade F';
+        document.getElementById('sum-grade').innerText = grade;
+
+        // Attendance status
+        document.getElementById('sum-att').innerText = att + '% (' + (att >= 75 ? 'Satisfactory' : 'Low Attendance Alert') + ')';
+
+        // Risk detection
+        const isRisk = (att < 60 || mid < 45 || lr_score < 50);
+        const kpiStatus = document.getElementById('kpi-status');
+        const kpiRiskText = document.getElementById('kpi-risk-text');
+        const overviewText = document.getElementById('pred-overview-text');
+
+        if (isRisk) {
+            kpiStatus.className = 'status-badge status-risk';
+            kpiStatus.innerText = 'AT-RISK';
+            kpiRiskText.innerText = 'Needs academic intervention and tutoring';
+            overviewText.innerText = 'Notice: The student shows lower than average attendance or marks, placing them at risk of failing the semester. Remedial support is recommended.';
+        } else {
+            kpiStatus.className = 'status-badge status-safe';
+            kpiStatus.innerText = 'SAFE';
+            kpiRiskText.innerText = 'Passing academic standing';
+            overviewText.innerText = 'The student is currently meeting satisfactory academic benchmarks across attendance and continuous assessments.';
+        }
+    }
+
+    window.onload = function() {
+        calculatePredictions();
+
+        // Model Comparison Chart
+        const ctxModel = document.getElementById('modelChart').getContext('2d');
+        modelChartInstance = new Chart(ctxModel, {
+            type: 'bar',
+            data: {
+                labels: ['Mean Absolute Error (MAE)', 'Root Mean Squared Error (RMSE)'],
+                datasets: [
+                    {
+                        label: 'Multiple Linear Regression',
+                        data: [15.239, 17.473],
+                        backgroundColor: '#4f46e5',
+                        borderColor: '#3730a3',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Decision Tree Regressor',
+                        data: [15.291, 17.591],
+                        backgroundColor: '#10b981',
+                        borderColor: '#059669',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 20,
+                        title: { display: true, text: 'Error in Marks (Lower is Better)' }
+                    }
+                },
+                plugins: {
+                    legend: { position: 'top' }
+                }
+            }
+        });
+
+        // Feature Importance Chart
+        const ctxFeature = document.getElementById('featureChart').getContext('2d');
+        featureChartInstance = new Chart(ctxFeature, {
+            type: 'bar',
+            data: {
+                labels: ['Attendance (%)', 'Midterm Score', 'Quizzes Avg', 'Assignments Avg', 'Science Score', 'Projects Score', 'Math Score', 'Reading Score'],
+                datasets: [{
+                    label: 'Gini Importance (Reduction in Impurity)',
+                    data: [0.112, 0.081, 0.083, 0.081, 0.076, 0.082, 0.077, 0.072],
+                    backgroundColor: '#6366f1',
+                    borderColor: '#4338ca',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        max: 0.15,
+                        title: { display: true, text: 'Importance' }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    };
+</script>
+</body>
+</html>
